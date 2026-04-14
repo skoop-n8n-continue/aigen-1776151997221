@@ -1,0 +1,99 @@
+{
+  "app_id": "calendar-001",
+  "document_version": 1,
+  "sections": {
+    "app_settings": {
+      "background_color": {
+        "type": "color",
+        "label": "Background Color",
+        "value": "#10181F"
+      },
+      "panel_color": {
+        "type": "color",
+        "label": "Panel Color",
+        "value": "#1A2630"
+      },
+      "panel_light_color": {
+        "type": "color",
+        "label": "Panel Light Color",
+        "value": "#233443"
+      },
+      "text_main_color": {
+        "type": "color",
+        "label": "Main Text Color",
+        "value": "#FFFFFF"
+      },
+      "text_muted_color": {
+        "type": "color",
+        "label": "Muted Text Color",
+        "value": "#8B969E"
+      },
+      "accent_color": {
+        "type": "color",
+        "label": "Accent Color",
+        "value": "#00B7AF"
+      },
+      "border_color": {
+        "type": "color",
+        "label": "Border Color",
+        "value": "#2C3E50"
+      },
+      "auto_rotate_seconds": {
+        "type": "number",
+        "label": "Auto Rotate Interval (sec)",
+        "value": 15,
+        "meta": { "format": "integer" }
+      },
+      "agenda_title": {
+        "type": "text",
+        "label": "Agenda Title",
+        "value": "Upcoming Events"
+      }
+    },
+    "event_types": {
+      "type": "collection",
+      "label": "Event Types",
+      "item_schema": {
+        "id": { "type": "text", "label": "ID" },
+        "name": { "type": "text", "label": "Type Name" },
+        "color": { "type": "color", "label": "Color" }
+      },
+      "value": [
+        { "id": "type_m1n2o3", "name": "Meeting", "color": "#00B7AF" },
+        { "id": "type_d4e5f6", "name": "Deadline", "color": "#FF5E5E" },
+        { "id": "type_c7h8i9", "name": "Company", "color": "#F0B429" },
+        { "id": "type_c1a2s3", "name": "Casual", "color": "#B07DDB" }
+      ]
+    },
+    "events": {
+      "type": "collection",
+      "label": "Events",
+      "item_schema": {
+        "id": { "type": "text", "label": "ID" },
+        "title": { "type": "text", "label": "Event Title" },
+        "date": { "type": "datetime", "label": "Event Date" },
+        "event_type": { "type": "text", "label": "Event Type ID" }
+      },
+      "value": [
+        { "id": "evt_a1b2c3", "title": "Project Retrospective", "date": "2026-04-11T10:00:00", "event_type": "type_c1a2s3" },
+        { "id": "evt_d4e5f6", "title": "Client Sync", "date": "2026-04-13T14:00:00", "event_type": "type_m1n2o3" },
+        { "id": "evt_g7h8i9", "title": "Daily Standup", "date": "2026-04-14T09:30:00", "event_type": "type_m1n2o3" },
+        { "id": "evt_j1k2l3", "title": "Design Review", "date": "2026-04-14T11:00:00", "event_type": "type_c7h8i9" },
+        { "id": "evt_m4n5o6", "title": "All-Hands Meeting", "date": "2026-04-15T15:00:00", "event_type": "type_c7h8i9" },
+        { "id": "evt_p7q8r9", "title": "Q2 Roadmap Planning", "date": "2026-04-16T13:00:00", "event_type": "type_m1n2o3" },
+        { "id": "evt_s1t2u3", "title": "Project Alpha Launch", "date": "2026-04-18T09:00:00", "event_type": "type_d4e5f6" },
+        { "id": "evt_v4w5x6", "title": "Team Lunch", "date": "2026-04-19T12:00:00", "event_type": "type_c1a2s3" },
+        { "id": "evt_y7z8a9", "title": "Client Presentation", "date": "2026-04-21T10:30:00", "event_type": "type_m1n2o3" },
+        { "id": "evt_b1c2d3", "title": "Marketing Sync", "date": "2026-04-24T14:00:00", "event_type": "type_m1n2o3" },
+        { "id": "evt_e4f5g6", "title": "Code Freeze", "date": "2026-04-26T17:00:00", "event_type": "type_d4e5f6" },
+        { "id": "evt_h7i8j9", "title": "Company Town Hall", "date": "2026-04-29T15:00:00", "event_type": "type_c7h8i9" },
+        { "id": "evt_k1l2m3", "title": "Sprint Retrospective", "date": "2026-05-02T11:00:00", "event_type": "type_m1n2o3" },
+        { "id": "evt_n4o5p6", "title": "Quarterly Review", "date": "2026-05-06T10:00:00", "event_type": "type_d4e5f6" },
+        { "id": "evt_q7r8s9", "title": "Happy Hour", "date": "2026-05-09T17:00:00", "event_type": "type_c1a2s3" },
+        { "id": "evt_t1u2v3", "title": "Monthly Kickoff", "date": "2026-05-15T09:00:00", "event_type": "type_c7h8i9" },
+        { "id": "evt_w4x5y6", "title": "Cross-functional Sync", "date": "2026-05-19T13:00:00", "event_type": "type_m1n2o3" },
+        { "id": "evt_z7a8b9", "title": "Beta Release", "date": "2026-05-26T08:00:00", "event_type": "type_d4e5f6" }
+      ]
+    }
+  }
+}

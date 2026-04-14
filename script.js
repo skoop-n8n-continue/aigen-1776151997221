@@ -1,77 +1,99 @@
-// Digital Signage Calendar Logic
+// Digital Signage Calendar Logic with data.json configurator
 
+// Global state
 const today = new Date();
-// Remove time component for strict date comparisons
 today.setHours(0, 0, 0, 0);
 
-// Global state for auto-rotation
 let displayMonth = today.getMonth();
 let displayYear = today.getFullYear();
 let isShowingNextMonth = false;
+let autoRotateInterval = null;
 
-// Theme colors from CSS
-const COLORS = {
-    meeting: 'var(--event-meeting)',
-    deadline: 'var(--event-deadline)',
-    company: 'var(--event-company)',
-    casual: 'var(--event-casual)'
-};
+let appData = null;
+let parsedEvents = [];
+let eventTypesMap = {};
 
-// Generate sample events relative to today so it's always populated
-function generateSampleEvents() {
-    const evts = [];
-
-    function addEvent(dayOffset, title, type) {
-        const d = new Date(today);
-        d.setDate(today.getDate() + dayOffset);
-
-        evts.push({
-            date: d,
-            title: title,
-            color: COLORS[type] || COLORS.meeting
-        });
-    }
-
-    // Past events (few days ago)
-    addEvent(-3, "Project Retrospective", "casual");
-    addEvent(-1, "Client Sync", "meeting");
-
-    // Today's events
-    addEvent(0, "Daily Standup", "meeting");
-    addEvent(0, "Design Review", "company");
-
-    // Upcoming events (Current month and next)
-    addEvent(1, "All-Hands Meeting", "company");
-    addEvent(2, "Q2 Roadmap Planning", "meeting");
-    addEvent(4, "Project Alpha Launch", "deadline");
-    addEvent(5, "Team Lunch", "casual");
-    addEvent(7, "Client Presentation", "meeting");
-    addEvent(10, "Marketing Sync", "meeting");
-    addEvent(12, "Code Freeze", "deadline");
-    addEvent(15, "Company Town Hall", "company");
-    addEvent(18, "Sprint Retrospective", "meeting");
-    addEvent(22, "Quarterly Review", "deadline");
-    addEvent(25, "Happy Hour", "casual");
-
-    // Next month events
-    addEvent(31, "Monthly Kickoff", "company");
-    addEvent(35, "Cross-functional Sync", "meeting");
-    addEvent(42, "Beta Release", "deadline");
-
-    return evts;
+// Fetch and parse data.json
+async function loadAppData() {
+  try {
+    const response = await fetch('data.json');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to load app data:', error);
+    return null;
+  }
 }
 
-const events = generateSampleEvents();
+// Convert hex to rgb string for alpha transparency
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 183, 175';
+}
+
+async function init() {
+    const data = await loadAppData();
+    if (!data) return;
+    appData = data;
+
+    // Apply data-driven styles
+    const settings = data.sections.app_settings;
+    document.documentElement.style.setProperty('--bg-dark', settings.background_color.value);
+    document.documentElement.style.setProperty('--bg-panel', settings.panel_color.value);
+    document.documentElement.style.setProperty('--bg-panel-light', settings.panel_light_color.value);
+    document.documentElement.style.setProperty('--text-main', settings.text_main_color.value);
+    document.documentElement.style.setProperty('--text-muted', settings.text_muted_color.value);
+    document.documentElement.style.setProperty('--accent', settings.accent_color.value);
+    document.documentElement.style.setProperty('--border', settings.border_color.value);
+
+    // Calculate transparent versions of accent color for glow and today bg
+    const rgbAccent = hexToRgb(settings.accent_color.value);
+    document.documentElement.style.setProperty('--accent-glow', `rgba(${rgbAccent}, 0.3)`);
+    document.documentElement.style.setProperty('--today-bg', `rgba(${rgbAccent}, 0.15)`);
+
+    // Apply Agenda title
+    document.getElementById('agenda-title').innerText = settings.agenda_title?.value || "Upcoming Events";
+
+    // Setup event types map for easy lookup
+    const eventTypes = data.sections.event_types?.value || [];
+    eventTypes.forEach(type => {
+        eventTypesMap[type.id] = type;
+    });
+
+    // Parse events dates
+    const rawEvents = data.sections.events?.value || [];
+    parsedEvents = rawEvents.map(evt => {
+        const d = new Date(evt.date);
+        d.setHours(0, 0, 0, 0); // normalize for day comparisons
+        return {
+            id: evt.id,
+            title: evt.title,
+            date: d,
+            origDate: new Date(evt.date),
+            typeId: evt.event_type
+        };
+    });
+
+    // Initial renders
+    renderCalendar(displayMonth, displayYear);
+    renderAgenda();
+
+    // Setup Auto-rotate
+    const intervalSecs = settings.auto_rotate_seconds?.value || 15;
+    autoRotateInterval = setInterval(cycleSignage, intervalSecs * 1000);
+
+    // Reveal the app
+    document.getElementById('app-container').classList.add('loaded');
+}
+
 
 // --- Clock and Date logic ---
 function updateClock() {
     const now = new Date();
 
-    // Update Clock (e.g., 10:42 AM)
     const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
     document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', timeOptions);
 
-    // Update Date Display (e.g., Tuesday, April 14, 2026)
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', dateOptions);
 }
@@ -92,12 +114,9 @@ function renderCalendar(month, year) {
     const firstDayOfMonth = new Date(year, month, 1);
     monthYearDisplay.innerText = firstDayOfMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    // Calculate calendar grid properties
     const startingDay = firstDayOfMonth.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-    // We want exactly 6 rows (42 cells) to keep grid size consistent
     const totalCells = 42;
 
     // 1. Previous month trailing days
@@ -134,32 +153,28 @@ function createDayCell(cellDate, dayNum, isOtherMonth) {
         cell.classList.add('other-month');
     }
 
-    // Check if this cell is exactly "today"
     if (cellDate.getTime() === today.getTime()) {
         cell.classList.add('today');
     }
 
-    // Number element
     const numEl = document.createElement('div');
     numEl.classList.add('day-number');
     numEl.innerText = dayNum;
     cell.appendChild(numEl);
 
-    // Add events for this day (limit to max 3 visually to prevent overflow)
-    const dayEvents = events.filter(e => e.date.getTime() === cellDate.getTime());
-
+    const dayEvents = parsedEvents.filter(e => e.date.getTime() === cellDate.getTime());
     const maxEventsToShow = 3;
     const eventsToShow = dayEvents.slice(0, maxEventsToShow);
 
     eventsToShow.forEach(evt => {
         const evtEl = document.createElement('div');
         evtEl.classList.add('event-dot');
-        evtEl.style.backgroundColor = evt.color;
+        const evtType = eventTypesMap[evt.typeId];
+        evtEl.style.backgroundColor = evtType ? evtType.color : 'var(--accent)';
         evtEl.innerText = evt.title;
         cell.appendChild(evtEl);
     });
 
-    // If more events than max, show a "+X more" indicator
     if (dayEvents.length > maxEventsToShow) {
         const moreEl = document.createElement('div');
         moreEl.classList.add('event-dot');
@@ -180,19 +195,19 @@ function renderAgenda() {
     const agendaList = document.getElementById('events-list');
     agendaList.innerHTML = '';
 
-    // Find all upcoming events starting from today
-    // Limit to next 10 events to not overload the screen
-    const upcomingEvents = events
+    const upcomingEvents = parsedEvents
         .filter(e => e.date.getTime() >= today.getTime())
-        .sort((a, b) => a.date - b.date)
+        .sort((a, b) => a.origDate - b.origDate)
         .slice(0, 10);
 
     upcomingEvents.forEach(evt => {
         const item = document.createElement('div');
         item.classList.add('agenda-event');
-        item.style.borderLeftColor = evt.color;
 
-        // Format Date nicely (e.g. "Today", "Tomorrow", or "Apr 15")
+        const evtType = eventTypesMap[evt.typeId];
+        const eventColor = evtType ? evtType.color : 'var(--accent)';
+        item.style.borderLeftColor = eventColor;
+
         let dateLabel = "";
         const diffTime = Math.abs(evt.date - today);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -205,8 +220,10 @@ function renderAgenda() {
             dateLabel = evt.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
         }
 
+        const timeLabel = evt.origDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
         item.innerHTML = `
-            <div class="agenda-event-time">${dateLabel}</div>
+            <div class="agenda-event-time">${dateLabel} &middot; ${timeLabel}</div>
             <div class="agenda-event-title">${evt.title}</div>
         `;
 
@@ -216,7 +233,6 @@ function renderAgenda() {
 
 
 // --- Signage Auto-Rotation Logic ---
-// Automatically cycle between current month and next month
 function cycleSignage() {
     isShowingNextMonth = !isShowingNextMonth;
 
@@ -234,26 +250,20 @@ function cycleSignage() {
     renderCalendar(targetMonth, targetYear);
 }
 
-// Initial render
-renderCalendar(displayMonth, displayYear);
-renderAgenda();
-
-// Auto-rotate every 15 seconds
-setInterval(cycleSignage, 15000);
-
 // Slow auto-scroll the agenda if needed (since signage is non-interactive)
 function scrollAgenda() {
     const list = document.getElementById('events-list');
-    if (list.scrollHeight > list.clientHeight) {
-        list.scrollTop += 1; // Scroll 1px
-        // If at bottom, reset to top
+    if (list && list.scrollHeight > list.clientHeight) {
+        list.scrollTop += 1;
         if (list.scrollTop + list.clientHeight >= list.scrollHeight - 1) {
             setTimeout(() => {
                 list.scrollTop = 0;
-            }, 2000); // Pause at bottom before resetting
+            }, 2000);
         }
     }
 }
 
-// Start smooth scrolling the agenda every 50ms
 setInterval(scrollAgenda, 50);
+
+// Initialize
+init();
