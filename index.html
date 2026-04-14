@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Signage Calendar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Calendar View (Left/Top) -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h1 id="month-year">Month Year</h1>
+                <div class="cycle-indicator" id="cycle-indicator"></div>
+            </div>
+
+            <div class="weekdays">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+            </div>
+
+            <div class="days-grid" id="days-grid">
+                <!-- Day cells injected via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Agenda View (Right/Bottom) -->
+        <div class="agenda-section">
+            <div class="time-header">
+                <div class="clock" id="clock">00:00 AM</div>
+                <div class="date-display" id="date-display">Day, Month 00, Year</div>
+            </div>
+
+            <div class="agenda-content">
+                <h2>Upcoming Events</h2>
+                <div class="events-list" id="events-list">
+                    <!-- Events injected via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
